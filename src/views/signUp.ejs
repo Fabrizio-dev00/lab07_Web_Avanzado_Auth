@@ -1,0 +1,91 @@
+<%- include('partials/header') %>
+
+<div class="row" style="margin-top: 20px;">
+    <div class="col s12 m8 offset-m2">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title center-align">Registro de Usuario</span>
+                <form id="signUpForm">
+                    <div class="row">
+                        <div class="input-field col s12 m6">
+                            <input id="name" type="text" required>
+                            <label for="name">Nombre</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <input id="lastName" type="text" required>
+                            <label for="lastName">Apellido</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12 m6">
+                            <input id="email" type="email" required>
+                            <label for="email">Email</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <input id="phoneNumber" type="text" required>
+                            <label for="phoneNumber">Teléfono</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12 m6">
+                            <input id="birthdate" type="date" required>
+                            <label for="birthdate" class="active">Fecha de Nacimiento</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <input id="password" type="password" required>
+                            <label for="password">Contraseña (Min 8, A, 1, #)</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <input id="address" type="text">
+                            <label for="address">Dirección</label>
+                        </div>
+                    </div>
+                    <button class="btn waves-effect waves-light" type="submit" style="width: 100%;">
+                        Registrarse <i class="material-icons right">person_add</i>
+                    </button>
+
+                </form>
+                <p class="center-align" style="margin-top: 20px;">
+                    ¿Ya tienes cuenta? <a href="/signIn">Inicia sesión</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('signUpForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            name: document.getElementById('name').value,
+            lastName: document.getElementById('lastName').value,
+            email: document.getElementById('email').value,
+            phoneNumber: document.getElementById('phoneNumber').value,
+            birthdate: document.getElementById('birthdate').value,
+            password: document.getElementById('password').value,
+            address: document.getElementById('address').value
+        };
+
+        try {
+            const res = await fetch('/api/auth/signUp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.status === 201) {
+                M.toast({html: 'Registro exitoso. Redirigiendo...', classes: 'green'});
+                setTimeout(() => window.location.href = '/signIn', 2000);
+            } else {
+                M.toast({html: data.message || 'Error en el registro', classes: 'red'});
+            }
+        } catch (err) {
+            M.toast({html: 'Error de conexión', classes: 'red'});
+        }
+    });
+</script>
+
+<%- include('partials/footer') %>

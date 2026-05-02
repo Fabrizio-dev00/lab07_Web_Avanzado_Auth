@@ -1,0 +1,94 @@
+<%- include('partials/header') %>
+
+<div class="row" style="margin-top: 20px;">
+    <div class="col s12">
+        <h3>Panel de Administración</h3>
+        <table class="highlight responsive-table card" style="overflow: hidden;">
+            <thead style="background: var(--dark-mint-darkest); color: white;">
+                <tr>
+                    <th>Nombre</th>
+
+                    <th>Email</th>
+                    <th>Roles</th>
+                    <th>Edad</th>
+                    <th>Registro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                <!-- Se llena con JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <h4>Detalle de Usuario</h4>
+        <div id="modalContent"></div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = sessionStorage.getItem('token');
+        if (!token) { window.location.href = '/signIn'; return; }
+
+        // Validar si es admin antes de pedir la lista
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (!payload.roles.includes('admin')) {
+            window.location.href = '/403';
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const users = await res.json();
+
+            if (res.ok) {
+                const tbody = document.getElementById('userTableBody');
+                users.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${user.name} ${user.lastName}</td>
+                        <td>${user.email}</td>
+                        <td>${user.roles.map(r => r.name).join(', ')}</td>
+                        <td>${calculateAge(user.birthdate)}</td>
+                        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn-small blue" onclick="viewUser('${user._id}')">Ver</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else if (res.status === 403) {
+                window.location.href = '/403';
+            }
+        } catch (err) {
+            M.toast({html: 'Error al cargar usuarios', classes: 'red'});
+        }
+
+        M.Modal.init(document.querySelectorAll('.modal'));
+    });
+
+    function calculateAge(birthdate) {
+        const diff = Date.now() - new Date(birthdate).getTime();
+        const ageDate = new Date(diff);
+        return Math.abs(ageDate.getUTCFullYear() - 1970);
+    }
+
+    async function viewUser(id) {
+        const token = sessionStorage.getItem('token');
+        // Aquí podrías llamar a un endpoint de detalle si existiera, o buscarlo en la lista.
+        // Por simplicidad, buscaremos los datos básicos o haremos un fetch al /me (si el API lo permitiera para otros IDs)
+        // Como el API actual no tiene GET /api/users/:id abierto a admin fácilmente sin ID, usaremos los datos de la lista o simularemos.
+        M.toast({html: 'Ver detalle: ' + id});
+    }
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,110 @@
+<%- include('partials/header') %>
+
+<div class="row" style="margin-top: 20px;">
+    <div class="col s12 m8 offset-m2">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">Mi Perfil</span>
+                <div class="center-align">
+                    <img id="profileImg" src="https://via.placeholder.com/150" alt="Profile" class="circle responsive-img" style="width: 150px; height: 150px; object-fit: cover;">
+                </div>
+                <form id="profileForm">
+                    <div class="row">
+                        <div class="input-field col s12 m6">
+                            <input id="name" type="text" class="active">
+                            <label for="name" class="active">Nombre</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <input id="lastName" type="text">
+                            <label for="lastName" class="active">Apellido</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12 m6">
+                            <input id="phoneNumber" type="text">
+                            <label for="phoneNumber" class="active">Teléfono</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <input id="birthdate" type="date">
+                            <label for="birthdate" class="active">Fecha de Nacimiento</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <input id="address" type="text">
+                            <label for="address" class="active">Dirección</label>
+                        </div>
+                    </div>
+                    <p><strong>Edad actual:</strong> <span id="userAge"></span> años</p>
+                    <button class="btn waves-effect waves-light" type="submit" style="width: 100%; margin-top: 20px;">
+                        Guardar Cambios <i class="material-icons right">save</i>
+                    </button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = sessionStorage.getItem('token');
+        if (!token) { window.location.href = '/signIn'; return; }
+
+        try {
+            const res = await fetch('/api/users/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const user = await res.json();
+
+            if (res.ok) {
+                document.getElementById('name').value = user.name;
+                document.getElementById('lastName').value = user.lastName;
+                document.getElementById('phoneNumber').value = user.phoneNumber;
+                document.getElementById('birthdate').value = user.birthdate.split('T')[0];
+                document.getElementById('address').value = user.address || '';
+                document.getElementById('userAge').innerText = user.age;
+                if (user.url_profile) document.getElementById('profileImg').src = user.url_profile;
+                M.updateTextFields();
+            }
+        } catch (err) {
+            M.toast({html: 'Error al cargar perfil', classes: 'red'});
+        }
+    });
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const token = sessionStorage.getItem('token');
+        const payload = {
+            name: document.getElementById('name').value,
+            lastName: document.getElementById('lastName').value,
+            phoneNumber: document.getElementById('phoneNumber').value,
+            birthdate: document.getElementById('birthdate').value,
+            address: document.getElementById('address').value
+        };
+
+        try {
+            const res = await fetch('/api/users/me', {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                M.toast({html: 'Perfil actualizado con éxito', classes: 'green'});
+                document.getElementById('userAge').innerText = data.age;
+            } else {
+                M.toast({html: data.message || 'Error al actualizar', classes: 'red'});
+            }
+        } catch (err) {
+            M.toast({html: 'Error de conexión', classes: 'red'});
+        }
+    });
+</script>
+
+
+<%- include('partials/footer') %>
